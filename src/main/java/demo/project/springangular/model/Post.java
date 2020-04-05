@@ -12,7 +12,7 @@ import java.time.Instant;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"user"})
+@ToString //(exclude = {"user"})
 @Builder
 public class Post {
     @Id
@@ -23,6 +23,7 @@ public class Post {
     private String content;
     private Instant createdOn;
     private Instant updatedOn;
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    private User user;
+    private String username;
+//    @ManyToOne(cascade = CascadeType.PERSIST)
+//    private User user;
 }
