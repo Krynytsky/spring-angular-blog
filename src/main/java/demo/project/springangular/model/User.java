@@ -12,7 +12,7 @@ import java.util.List;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"posts"})
+@ToString //(exclude = {"posts"})
 @Builder
 public class User {
     @Id
@@ -23,7 +23,7 @@ public class User {
     private String userName;
     private String password;
     private String email;
-    @OneToMany(mappedBy = "user",cascade = CascadeType.PERSIST)
-    private List <Post> posts = new ArrayList<>();
+//    @OneToMany(mappedBy = "user",cascade = CascadeType.PERSIST)
+//    private List <Post> posts = new ArrayList<>();
 
 }
