@@ -1,6 +1,7 @@
 package demo.project.springangular.security;
 
 
+import demo.project.springangular.exeption.SpringAngularException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -10,37 +11,65 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.security.Key;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 @Service
 public class JwtProvider {
 
-    private Key key;
+    private KeyStore keyStore;
 
     @PostConstruct
     public void init() {
-        key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        try {
+            keyStore = KeyStore.getInstance("JKS");
+            InputStream resourceAsStream = getClass().getResourceAsStream("/springangular.jks");
+            keyStore.load(resourceAsStream, "Tarzan".toCharArray());
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+            throw new SpringAngularException("Exception occured while loading keystore");
+        }
     }
 
     public String generateToken(Authentication authentication) {
         User principal = (User) authentication.getPrincipal();
         return Jwts.builder()
                 .setSubject(principal.getUsername())
-                .signWith(key)
+                .signWith(getPrivateKey())
                 .compact();
     }
 
+    private PrivateKey getPrivateKey() {
+        try {
+            return (PrivateKey) keyStore.getKey("springangular", "Tarzan".toCharArray());
+        }catch (KeyStoreException|NoSuchAlgorithmException|UnrecoverableKeyException e){
+            throw new SpringAngularException("Exception occured while retrieving public key keystore");
+        }
+
+    }
+
+
     public boolean validateToken(String jwt) {
-        Jwts.parser().setSigningKey(key)
+        Jwts.parser().setSigningKey(getPublicKey())
                 .parseClaimsJws(jwt);
         return true;
 
     }
 
+    private PublicKey getPublicKey() {
+        try {
+            return keyStore.getCertificate("springangular").getPublicKey();
+        } catch (KeyStoreException e) {
+           throw new SpringAngularException("Exception occured while retrieving public key keystore");
+        }
+    }
+
+
 
     public String getUsernameFromJwt(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(key)
+                .setSigningKey(getPublicKey())
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
